@@ -1,0 +1,97 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JARVIS AI</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#050d18;color:#54dfff;font-family:Arial;text-align:center;padding:20px}
+h1{letter-spacing:8px;text-shadow:0 0 15px #00bfff}
+.core{width:190px;height:190px;border:4px solid #29dfff;border-radius:50%;margin:35px auto;box-shadow:0 0 35px #00bfff;display:grid;place-items:center;animation:pulse 2s infinite}
+.core span{font-size:55px}
+@keyframes pulse{50%{box-shadow:0 0 65px #00bfff}}
+.panel{background:#101f30;border:1px solid #168eb5;border-radius:15px;padding:18px;margin:15px auto;max-width:500px}
+input,button,select{padding:13px;border-radius:9px;border:1px solid #25cfff;background:#071522;color:#fff;margin:5px}
+button{background:#087fa8;font-weight:bold}
+#log{height:180px;overflow:auto;text-align:left;color:#d8f8ff;font-size:14px}
+</style>
+</head>
+<body>
+<h1>J.A.R.V.I.S</h1>
+<p>ASISTENTE PERSONAL</p>
+<div class="core"><span>◉</span></div>
+<div class="panel">
+<p id="status">SISTEMA EN ESPERA</p>
+<input id="msg" placeholder="Escribe un mensaje...">
+<button onclick="send()">ENVIAR</button>
+<button onclick="listen()">🎙 HABLAR</button>
+<br>
+<select id="voice"><option value="">Voz predeterminada</option></select>
+</div>
+<div class="panel">
+<h3>CONSOLA DEL SISTEMA</h3>
+<div id="log">JARVIS: Sistema iniciado. Esperando instrucciones...</div>
+</div>
+<script>
+const log=document.getElementById("log");
+const status=document.getElementById("status");
+function show(who,msg){
+ log.innerHTML+="<p><b>"+who+":</b> "+msg+"</p>";
+ log.scrollTop=log.scrollHeight;
+}
+function speak(text){
+ if(!("speechSynthesis" in window)){show("JARVIS","La voz no está disponible.");return;}
+ speechSynthesis.cancel();
+ let u=new SpeechSynthesisUtterance(text);
+ u.lang="es-ES";u.rate=0.88;u.pitch=0.85;
+ let v=speechSynthesis.getVoices();
+ let chosen=document.getElementById("voice").value;
+ if(chosen)u.voice=v.find(x=>x.name===chosen)||null;
+ speechSynthesis.speak(u);
+}
+function answer(t){
+ let q=t.toLowerCase(),r="";
+ if(q.includes("hola"))r="Hola. Es un placer estar a su servicio.";
+ else if(q.includes("hora"))r="Puede consultar la hora actual en su teléfono.";
+ else if(q.includes("tu nombre"))r="Mi nombre es JARVIS, su asistente personal.";
+ else if(q.includes("cómo estás"))r="Todos mis sistemas están funcionando correctamente.";
+ else if(q.includes("gracias"))r="Siempre a su servicio.";
+ else if(q.includes("ayuda"))r="Puedo responder algunos comandos básicos. Esta es mi versión inicial.";
+ else r="He recibido su mensaje. Todavía estoy aprendiendo a responder preguntas más complejas.";
+ show("JARVIS",r);speak(r);
+}
+function send(){
+ let x=document.getElementById("msg"),t=x.value.trim();
+ if(!t)return;
+ show("TÚ",t);x.value="";answer(t);
+}
+function listen(){
+ let R=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!R){show("JARVIS","Su navegador no admite reconocimiento de voz.");return;}
+ let rec=new R();rec.lang="es-ES";
+ status.textContent="ESCUCHANDO...";
+ rec.onresult=e=>{
+ let t=e.results[0][0].transcript;
+ document.getElementById("msg").value=t;
+ status.textContent="MENSAJE RECIBIDO";send();
+ };
+ rec.onerror=()=>status.textContent="NO SE PUDO ESCUCHAR";
+ rec.onend=()=>{if(status.textContent==="ESCUCHANDO...")status.textContent="SISTEMA EN ESPERA"};
+ rec.start();
+}
+function loadVoices(){
+ let s=document.getElementById("voice");
+ speechSynthesis.getVoices().forEach(v=>{
+ if(v.lang.startsWith("es")){
+ let o=document.createElement("option");
+ o.value=v.name;o.textContent=v.name;s.appendChild(o);
+ }
+ });
+}
+loadVoices();
+speechSynthesis.onvoiceschanged=loadVoices;
+</script>
+</body>
+</html>
